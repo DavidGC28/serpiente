@@ -165,32 +165,82 @@ function actualizarInterfaz(estado, mensaje) {
 }
 
 function dibujar() {
+    // Limpiar pantalla
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Comida Neón
-    ctx.fillStyle = "#10b981"; 
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = "#10b981"; 
-    ctx.fillRect(comida.x * TAMANIO_BLOQUE + 2, comida.y * TAMANIO_BLOQUE + 2, TAMANIO_BLOQUE - 4, TAMANIO_BLOQUE - 4);
+    // Color monocromático del píxel activo de Nokia 3310
+    const COLOR_PIXEL = "#12160f";
+    ctx.fillStyle = COLOR_PIXEL;
+    ctx.shadowBlur = 0; // Desactivar resplandores modernos
 
-    // Serpiente (Cabeza Neón / Cuerpo Morado NERV)
+    // ==========================================
+    // --- 1. COMIDA: RATÓN PIXELADO DE 8 BITS ---
+    // ==========================================
+    let fx = comida.x * TAMANIO_BLOQUE;
+    let fy = comida.y * TAMANIO_BLOQUE;
+    let p = 3; // Tamaño del píxel interno del ratón
+
+    // Orejas
+    ctx.fillRect(fx + 3 * p, fy + 1 * p, p, p);
+    ctx.fillRect(fx + 4 * p, fy + 2 * p, p, p);
+    // Cuerpo
+    ctx.fillRect(fx + 2 * p, fy + 3 * p, 4 * p, 2 * p);
+    ctx.fillRect(fx + 1 * p, fy + 4 * p, p, p); // Nariz (Izquierda)
+    // Patas
+    ctx.fillRect(fx + 2 * p, fy + 5 * p, p, p);
+    ctx.fillRect(fx + 5 * p, fy + 5 * p, p, p);
+    // Cola
+    ctx.fillRect(fx + 6 * p, fy + 4 * p, p, p);
+    ctx.fillRect(fx + 7 * p, fy + 3 * p, p, p);
+
+
+    // ==========================================
+    // --- 2. SERPIENTE PIXELADA DINÁMICA ---
+    // ==========================================
     for (let i = 0; i < serpiente.length; i++) {
         let xPos = serpiente[i].x * TAMANIO_BLOQUE;
         let yPos = serpiente[i].y * TAMANIO_BLOQUE;
 
         if (i === 0) {
-            ctx.fillStyle = "#10b981"; 
-            ctx.shadowBlur = 12;
-            ctx.shadowColor = "#10b981";
+            // --- CABEZA DE LA SERPIENTE (Bloque Completo) ---
+            ctx.fillStyle = COLOR_PIXEL;
+            ctx.fillRect(xPos, yPos, TAMANIO_BLOQUE, TAMANIO_BLOQUE);
+
+            // Ojos en "pantalla LCD" (píxeles apagados/transparentes del fondo)
+            ctx.fillStyle = "#b2bfa2"; 
+            let offset = 4;
+            let tamOjo = 4;
+
+            if (direccion === "derecha" || direccion === "izquierda") {
+                let mult = direccion === "derecha" ? 1 : -1;
+                let dexFrente = mult === 1 ? TAMANIO_BLOQUE - offset - tamOjo : offset;
+                
+                ctx.fillRect(xPos + dexFrente, yPos + offset, tamOjo, tamOjo);
+                ctx.fillRect(xPos + dexFrente, yPos + TAMANIO_BLOQUE - offset - tamOjo, tamOjo, tamOjo);
+            } else {
+                let mult = direccion === "abajo" ? 1 : -1;
+                let deyFrente = mult === 1 ? TAMANIO_BLOQUE - offset - tamOjo : offset;
+
+                ctx.fillRect(xPos + offset, yPos + deyFrente, tamOjo, tamOjo);
+                ctx.fillRect(xPos + TAMANIO_BLOQUE - offset - tamOjo, yPos + deyFrente, tamOjo, tamOjo);
+            }
+
         } else {
-            ctx.fillStyle = "#5c468c"; 
-            ctx.shadowBlur = 0; 
+            // --- CUERPO SEGMENTADO (Efecto cónico retro) ---
+            ctx.fillStyle = COLOR_PIXEL;
+            
+            // Va reduciendo 2 píxeles de grosor cada ciertos segmentos hacia la cola
+            let reduccion = Math.min(8, Math.floor(i / 2) * 2); 
+            let nuevoTamanio = TAMANIO_BLOQUE - reduccion;
+            let centrado = reduccion / 2;
+
+            // Dibujar el bloque del cuerpo centrado en su cuadrícula
+            ctx.fillRect(xPos + centrado, yPos + centrado, nuevoTamanio, nuevoTamanio);
+
+            // Pequeña cuadrícula divisoria interna entre bloques para que se note la animación
+            ctx.strokeStyle = "#b2bfa2"; 
+            ctx.lineWidth = 1;
+            ctx.strokeRect(xPos + centrado, yPos + centrado, nuevoTamanio, nuevoTamanio);
         }
-        
-        ctx.strokeStyle = "#151221"; 
-        ctx.fillRect(xPos, yPos, TAMANIO_BLOQUE, TAMANIO_BLOQUE);
-        ctx.strokeRect(xPos, yPos, TAMANIO_BLOQUE, TAMANIO_BLOQUE);
     }
 }
-
-dibujar();
